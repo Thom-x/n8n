@@ -62,7 +62,7 @@ jobs:
         context: .
         push: true
         tags: |
-          ghcr.io/${{ github.repository_owner }}/beszel-agent:latest
-          ghcr.io/${{ github.repository_owner }}/beszel-agent:${{ steps.strip_v.outputs.stripped_tag }}
+          ghcr.io/thom-x/beszel-agent:latest
+          ghcr.io/thom-x/beszel-agent:${{ steps.strip_v.outputs.stripped_tag }}
         build-args: |
           VERSION=${{ steps.strip_v.outputs.stripped_tag }}

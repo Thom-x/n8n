@@ -16,13 +16,13 @@ jobs:
     - name: Get latest image tag from GHCR
       id: get_ghcr_tag
       run: |
-        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
+        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
           https://api.github.com/user/packages/container/beszel-agent/versions)
         if [ "$RESPONSE" -eq 404 ]; then
           echo "Package not found, proceeding with build."
           echo "::set-output name=ghcr_tag::not_found"
         else
-          GHCR_TAG=$(curl -s -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
+          GHCR_TAG=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/user/packages/container/beszel-agent/versions \
             | jq -r '.[0].metadata.container.tags[0]')
           echo "GHCR tag: $GHCR_TAG"

@@ -13,6 +13,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Convert repository owner to lowercase
+      id: lowercase_owner
+      run: |
+        LOWERCASE_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+        echo "lowercase_owner=$LOWERCASE_OWNER" >> $GITHUB_OUTPUT
+
     - name: Get latest image tag from GHCR
       id: get_ghcr_tag
       run: |
@@ -20,13 +26,13 @@ jobs:
           https://api.github.com/user/packages/container/beszel-agent/versions)
         if [ "$RESPONSE" -eq 404 ]; then
           echo "Package not found, proceeding with build."
-          echo "::set-output name=ghcr_tag::not_found"
+          echo "ghcr_tag=not_found" >> $GITHUB_OUTPUT
         else
           GHCR_TAG=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/user/packages/container/beszel-agent/versions \
             | jq -r '.[0].metadata.container.tags[0]')
           echo "GHCR tag: $GHCR_TAG"
-          echo "::set-output name=ghcr_tag::$GHCR_TAG"
+          echo "ghcr_tag=$GHCR_TAG" >> $GITHUB_OUTPUT
         fi
 
     - name: Get latest tag from remote repo
@@ -34,7 +40,7 @@ jobs:
       run: |
         REMOTE_TAG=$(curl -s https://api.github.com/repos/henrygd/beszel/tags | jq -r '.[0].name')
         echo "Remote tag: $REMOTE_TAG"
-        echo "::set-output name=remote_tag::$REMOTE_TAG"
+        echo "remote_tag=$REMOTE_TAG" >> $GITHUB_OUTPUT
 
     - name: Strip 'v' from remote tag
       id: strip_v
@@ -42,17 +48,17 @@ jobs:
         STRIPPED_TAG=${{ steps.get_remote_tag.outputs.remote_tag }}
         STRIPPED_TAG=${STRIPPED_TAG#v}
         echo "Stripped tag: $STRIPPED_TAG"
-        echo "::set-output name=stripped_tag::$STRIPPED_TAG"
+        echo "stripped_tag=$STRIPPED_TAG" >> $GITHUB_OUTPUT
 
     - name: Compare tags
       id: compare_tags
       run: |
         if [ "${{ steps.get_ghcr_tag.outputs.ghcr_tag }}" != "${{ steps.strip_v.outputs.stripped_tag }}" ]; then
           echo "Tags differ, building new image."
-          echo "::set-output name=build::true"
+          echo "build=true" >> $GITHUB_OUTPUT
         else
           echo "Tags are the same, no build needed."
-          echo "::set-output name=build::false"
+          echo "build=false" >> $GITHUB_OUTPUT
         fi
         
     - name: Login to GitHub Container Registry
@@ -70,7 +76,7 @@ jobs:
         context: .
         push: true
         tags: |
-          ghcr.io/thom-x/beszel-agent:latest
-          ghcr.io/thom-x/beszel-agent:${{ steps.strip_v.outputs.stripped_tag }}
+          ghcr.io/${{ steps.lowercase_owner.outputs.lowercase_owner }}/beszel-agent:latest
+          ghcr.io/${{ steps.lowercase_owner.outputs.lowercase_owner }}/beszel-agent:${{ steps.strip_v.outputs.stripped_tag }}
         build-args: |
           VERSION=${{ steps.strip_v.outputs.stripped_tag }}

@@ -32,7 +32,7 @@ jobs:
     - name: Get latest tag from remote repo
       id: get_remote_tag
       run: |
-        REMOTE_TAG=$(curl -s https://api.github.com/repos/owner/source-repo/tags | jq -r '.[0].name')
+        REMOTE_TAG=$(curl -s https://api.github.com/repos/henrygd/beszel/tags | jq -r '.[0].name')
         echo "Remote tag: $REMOTE_TAG"
         echo "::set-output name=remote_tag::$REMOTE_TAG"
 

@@ -16,11 +16,18 @@ jobs:
     - name: Get latest image tag from GHCR
       id: get_ghcr_tag
       run: |
-        GHCR_TAG=$(curl -s -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
-          https://api.github.com/user/packages/container/beszel-agent/versions \
-          | jq -r '.[0].metadata.container.tags[0]')
-        echo "GHCR tag: $GHCR_TAG"
-        echo "::set-output name=ghcr_tag::$GHCR_TAG"
+        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
+          https://api.github.com/user/packages/container/beszel-agent/versions)
+        if [ "$RESPONSE" -eq 404 ]; then
+          echo "Package not found, proceeding with build."
+          echo "::set-output name=ghcr_tag::not_found"
+        else
+          GHCR_TAG=$(curl -s -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
+            https://api.github.com/user/packages/container/beszel-agent/versions \
+            | jq -r '.[0].metadata.container.tags[0]')
+          echo "GHCR tag: $GHCR_TAG"
+          echo "::set-output name=ghcr_tag::$GHCR_TAG"
+        fi
 
     - name: Get latest tag from remote repo
       id: get_remote_tag

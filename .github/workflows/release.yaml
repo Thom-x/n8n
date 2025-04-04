@@ -16,7 +16,7 @@ jobs:
     - name: Get latest image tag from GHCR
       id: get_ghcr_tag
       run: |
-        GHCR_TAG=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+        GHCR_TAG=$(curl -s -H "Authorization: Bearer ${{ secrets.GHCR_PAT }}" \
           https://api.github.com/user/packages/container/beszel-agent/versions \
           | jq -r '.[0].metadata.container.tags[0]')
         echo "GHCR tag: $GHCR_TAG"
@@ -40,7 +40,7 @@ jobs:
     - name: Compare tags
       id: compare_tags
       run: |
-        if [ "${{ steps.get_ghcr_tag.outputs.ghcr_tag }}" != "${{ steps.get_remote_tag.outputs.remote_tag }}" ]; then
+        if [ "${{ steps.get_ghcr_tag.outputs.ghcr_tag }}" != "${{ steps.strip_v.outputs.stripped_tag }}" ]; then
           echo "Tags differ, building new image."
           echo "::set-output name=build::true"
         else
@@ -56,6 +56,6 @@ jobs:
         push: true
         tags: |
           ghcr.io/${{ github.repository_owner }}/beszel-agent:latest
-          ghcr.io/${{ github.repository_owner }}/beszel-agent:${{ steps.get_remote_tag.outputs.remote_tag }}
+          ghcr.io/${{ github.repository_owner }}/beszel-agent:${{ steps.strip_v.outputs.stripped_tag }}
         build-args: |
           VERSION=${{ steps.strip_v.outputs.stripped_tag }}

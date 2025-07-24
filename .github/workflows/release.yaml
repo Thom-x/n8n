@@ -38,11 +38,18 @@ jobs:
     - name: Get latest tag from remote repo
       id: get_remote_tag
       run: |
+        set +e
         REMOTE_TAG=$(curl -s https://api.github.com/repos/henrygd/beszel/tags | jq -r '.[0].name')
+        if [ -z "$REMOTE_TAG" ] || [ "$REMOTE_TAG" = "null" ]; then
+          echo "Failed to get remote tag. Stopping further steps."
+          echo "stop_job=true" >> $GITHUB_OUTPUT
+          exit 0
+        fi
         echo "Remote tag: $REMOTE_TAG"
         echo "remote_tag=$REMOTE_TAG" >> $GITHUB_OUTPUT
 
     - name: Strip 'v' from remote tag
+      if: steps.get_remote_tag.outputs.stop_job != 'true'
       id: strip_v
       run: |
         STRIPPED_TAG=${{ steps.get_remote_tag.outputs.remote_tag }}
@@ -51,6 +58,7 @@ jobs:
         echo "stripped_tag=$STRIPPED_TAG" >> $GITHUB_OUTPUT
 
     - name: Compare tags
+      if: steps.get_remote_tag.outputs.stop_job != 'true'
       id: compare_tags
       run: |
         if [ "${{ steps.get_ghcr_tag.outputs.ghcr_tag }}" != "${{ steps.strip_v.outputs.stripped_tag }}" ]; then
@@ -62,7 +70,7 @@ jobs:
         fi
         
     - name: Login to GitHub Container Registry
-      if: steps.compare_tags.outputs.build == 'true'
+      if: steps.get_remote_tag.outputs.stop_job != 'true' && steps.compare_tags.outputs.build == 'true'
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
@@ -70,7 +78,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
           
     - name: Build and push Docker image
-      if: steps.compare_tags.outputs.build == 'true'
+      if: steps.get_remote_tag.outputs.stop_job != 'true' && steps.compare_tags.outputs.build == 'true'
       uses: docker/build-push-action@v6
       with:
         context: .

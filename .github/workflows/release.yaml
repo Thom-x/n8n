@@ -48,12 +48,12 @@ jobs:
         echo "Remote tag: $REMOTE_TAG"
         echo "remote_tag=$REMOTE_TAG" >> $GITHUB_OUTPUT
 
-    - name: Strip 'v' from remote tag
+    - name: Strip 'release/' from remote tag
       if: steps.get_remote_tag.outputs.stop_job != 'true'
       id: strip_v
       run: |
         STRIPPED_TAG=${{ steps.get_remote_tag.outputs.remote_tag }}
-        STRIPPED_TAG=${STRIPPED_TAG#n8n@}
+        STRIPPED_TAG=${STRIPPED_TAG#release/}
         echo "Stripped tag: $STRIPPED_TAG"
         echo "stripped_tag=$STRIPPED_TAG" >> $GITHUB_OUTPUT
 

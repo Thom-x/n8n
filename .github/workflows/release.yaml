@@ -66,7 +66,7 @@ jobs:
           echo "build=true" >> $GITHUB_OUTPUT
         else
           echo "Tags are the same, no build needed."
-          echo "build=true" >> $GITHUB_OUTPUT # always true for now
+          echo "build=false" >> $GITHUB_OUTPUT
         fi
         
     - name: Login to GitHub Container Registry
@@ -87,5 +87,4 @@ jobs:
           ghcr.io/${{ steps.lowercase_owner.outputs.lowercase_owner }}/n8n:latest
           ghcr.io/${{ steps.lowercase_owner.outputs.lowercase_owner }}/n8n:${{ steps.strip_v.outputs.stripped_tag }}
         build-args: |
-          VERSION=latest
-        # or # ${{ steps.strip_v.outputs.stripped_tag }}
+          VERSION=${{ steps.strip_v.outputs.stripped_tag }}

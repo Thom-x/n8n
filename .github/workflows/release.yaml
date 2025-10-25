@@ -23,13 +23,13 @@ jobs:
       id: get_ghcr_tag
       run: |
         RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          https://api.github.com/user/packages/container/beszel-agent/versions)
+          https://api.github.com/user/packages/container/n8n/versions)
         if [ "$RESPONSE" -eq 404 ]; then
           echo "Package not found, proceeding with build."
           echo "ghcr_tag=not_found" >> $GITHUB_OUTPUT
         else
           GHCR_TAG=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            https://api.github.com/user/packages/container/beszel-agent/versions \
+            https://api.github.com/user/packages/container/n8n/versions \
             | jq -r '.[0].metadata.container.tags[0]')
           echo "GHCR tag: $GHCR_TAG"
           echo "ghcr_tag=$GHCR_TAG" >> $GITHUB_OUTPUT
@@ -39,7 +39,7 @@ jobs:
       id: get_remote_tag
       run: |
         set +e
-        REMOTE_TAG=$(curl -s https://api.github.com/repos/henrygd/beszel/tags | jq -r '.[0].name')
+        REMOTE_TAG=$(curl -s https://api.github.com/repos/n8n-io/n8n/tags | jq -r '.[0].name')
         if [ -z "$REMOTE_TAG" ] || [ "$REMOTE_TAG" = "null" ]; then
           echo "Failed to get remote tag. Stopping further steps."
           echo "stop_job=true" >> $GITHUB_OUTPUT
@@ -53,7 +53,7 @@ jobs:
       id: strip_v
       run: |
         STRIPPED_TAG=${{ steps.get_remote_tag.outputs.remote_tag }}
-        STRIPPED_TAG=${STRIPPED_TAG#v}
+        STRIPPED_TAG=${STRIPPED_TAG#n8n@}
         echo "Stripped tag: $STRIPPED_TAG"
         echo "stripped_tag=$STRIPPED_TAG" >> $GITHUB_OUTPUT
 
@@ -84,7 +84,7 @@ jobs:
         context: .
         push: true
         tags: |
-          ghcr.io/${{ steps.lowercase_owner.outputs.lowercase_owner }}/beszel-agent:latest
-          ghcr.io/${{ steps.lowercase_owner.outputs.lowercase_owner }}/beszel-agent:${{ steps.strip_v.outputs.stripped_tag }}
+          ghcr.io/${{ steps.lowercase_owner.outputs.lowercase_owner }}/n8n:latest
+          ghcr.io/${{ steps.lowercase_owner.outputs.lowercase_owner }}/n8n:${{ steps.strip_v.outputs.stripped_tag }}
         build-args: |
           VERSION=${{ steps.strip_v.outputs.stripped_tag }}

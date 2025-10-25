@@ -87,4 +87,5 @@ jobs:
           ghcr.io/${{ steps.lowercase_owner.outputs.lowercase_owner }}/n8n:latest
           ghcr.io/${{ steps.lowercase_owner.outputs.lowercase_owner }}/n8n:${{ steps.strip_v.outputs.stripped_tag }}
         build-args: |
-          VERSION=latest # ${{ steps.strip_v.outputs.stripped_tag }}
+          VERSION=latest
+        # or # ${{ steps.strip_v.outputs.stripped_tag }}

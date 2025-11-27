@@ -4,6 +4,11 @@ on:
   #schedule:
   #  - cron: '0 * * * *'  # Runs every hour
   workflow_dispatch:  # Allows manual triggering
+    inputs:
+      version:
+        description: 'Version to build (e.g., 1.2.3). Leave empty to use latest remote tag.'
+        required: false
+        type: string
 
 jobs:
   check-and-build:
@@ -40,13 +45,18 @@ jobs:
       id: get_remote_tag
       run: |
         set +e
-        REMOTE_TAG=$(curl -s https://api.github.com/repos/n8n-io/n8n/tags | jq -r '.[0].name')
-        if [ -z "$REMOTE_TAG" ] || [ "$REMOTE_TAG" = "null" ]; then
-          echo "Failed to get remote tag. Stopping further steps."
-          echo "stop_job=true" >> $GITHUB_OUTPUT
-          exit 0
+        if [ -n "${{ inputs.version }}" ]; then
+          REMOTE_TAG="release/${{ inputs.version }}"
+          echo "Using provided version: $REMOTE_TAG"
+        else
+          REMOTE_TAG=$(curl -s https://api.github.com/repos/n8n-io/n8n/tags | jq -r '.[0].name')
+          if [ -z "$REMOTE_TAG" ] || [ "$REMOTE_TAG" = "null" ]; then
+            echo "Failed to get remote tag. Stopping further steps."
+            echo "stop_job=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "Remote tag: $REMOTE_TAG"
         fi
-        echo "Remote tag: $REMOTE_TAG"
         echo "remote_tag=$REMOTE_TAG" >> $GITHUB_OUTPUT
 
     - name: Strip 'release/' from remote tag
